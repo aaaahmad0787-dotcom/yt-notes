@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YTNotes.ai — AI Study Notes</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',sans-serif;background:#0f0f0f;color:#f0f0f0;min-height:100vh}
+
+    nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid #1e1e1e;position:sticky;top:0;background:#0f0f0f;z-index:100}
+    .logo{font-size:20px;font-weight:800;color:#fff}.logo span{color:#22c55e}
+    .nav-pill{font-size:11px;background:#22c55e18;color:#22c55e;border:1px solid #22c55e33;padding:4px 12px;border-radius:20px}
+
+    .hero{text-align:center;padding:56px 20px 36px}
+    .hero-tag{display:inline-block;font-size:12px;background:#22c55e12;color:#22c55e;border:1px solid #22c55e30;border-radius:20px;padding:5px 16px;margin-bottom:18px}
+    h1{font-size:clamp(26px,5vw,50px);font-weight:800;line-height:1.15;margin-bottom:14px}
+    h1 span{color:#22c55e}
+    .sub{font-size:15px;color:#666;max-width:460px;margin:0 auto 36px;line-height:1.6}
+
+    .wrap{max-width:700px;margin:0 auto;padding:0 20px 60px}
+
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+    .stat{background:#1a1a1a;border:1px solid #222;border-radius:12px;padding:16px;text-align:center}
+    .stat-n{font-size:22px;font-weight:700;color:#22c55e}
+    .stat-l{font-size:11px;color:#555;margin-top:3px}
+
+    .card{background:#1a1a1a;border:1px solid #252525;border-radius:16px;padding:24px;margin-bottom:16px}
+
+    label{font-size:12px;color:#666;display:block;margin-bottom:7px}
+
+    input[type=text],input[type=password]{width:100%;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:13px 15px;font-size:14px;color:#fff;outline:none;transition:border-color .2s;margin-bottom:14px}
+    input:focus{border-color:#22c55e}
+    input::placeholder{color:#333}
+
+    .hint{font-size:11px;color:#444;margin-top:-10px;margin-bottom:16px}
+    .hint a{color:#22c55e;text-decoration:none}
+
+    .styles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+    .sty{background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:10px 6px;color:#555;font-size:12px;cursor:pointer;transition:all .2s;text-align:center}
+    .sty.on{background:#22c55e15;border-color:#22c55e;color:#22c55e;font-weight:600}
+
+    .examples{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .ex{font-size:11px;background:#111;border:1px solid #222;border-radius:6px;padding:4px 10px;color:#555;cursor:pointer;transition:all .2s}
+    .ex:hover{border-color:#22c55e44;color:#22c55e}
+
+    .btn{width:100%;background:#22c55e;color:#000;border:none;border-radius:10px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s}
+    .btn:hover{background:#16a34a}
+    .btn:disabled{background:#1e1e1e;color:#444;cursor:not-allowed}
+
+    .err{display:none;background:#1a0808;border:1px solid #3a1515;border-radius:10px;padding:14px 18px;color:#f87171;font-size:13px;margin-bottom:16px;line-height:1.6}
+    .err.show{display:block}
+
+    .load{display:none;text-align:center;padding:36px;background:#1a1a1a;border:1px solid #222;border-radius:16px;margin-bottom:16px}
+    .load.show{display:block}
+    .spin{width:34px;height:34px;border:3px solid #1e1e1e;border-top:3px solid #22c55e;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .load-txt{color:#555;font-size:13px}
+    .load-step{color:#22c55e;font-size:12px;margin-top:6px}
+
+    .result{display:none;background:#1a1a1a;border:1px solid #252525;border-radius:16px;overflow:hidden;margin-bottom:16px}
+    .result.show{display:block}
+    .res-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#111;border-bottom:1px solid #1e1e1e}
+    .res-title{font-size:13px;font-weight:600;color:#22c55e}
+    .res-btns{display:flex;gap:6px}
+    .rbtn{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:5px 12px;color:#aaa;font-size:12px;cursor:pointer;transition:all .2s}
+    .rbtn:hover{background:#222;color:#fff}
+    .rbtn.ok{background:#22c55e18;border-color:#22c55e;color:#22c55e}
+    .res-body{padding:22px;font-size:14px;line-height:1.85;color:#ccc;white-space:pre-wrap;max-height:580px;overflow-y:auto}
+    .res-body::-webkit-scrollbar{width:3px}
+    .res-body::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
+
+    footer{text-align:center;padding:20px;color:#2a2a2a;font-size:11px;border-top:1px solid #151515}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">YT<span>Notes</span>.ai</div>
+  <div class="nav-pill">Free Beta — Made in India</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">Powered by Groq AI + YouTube Transcript API</div>
+  <h1>YouTube Videos ko<br/><span>Smart Notes</span> mein badlo</h1>
+  <p class="sub">Subtitles ho ya na ho — kisi bhi video ka transcript fetch karke AI se clean notes banao. JEE, NEET, college sab ke liye.</p>
+</div>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="stat-n">Any</div><div class="stat-l">Video — subtitles optional</div></div>
+    <div class="stat"><div class="stat-n">Free</div><div class="stat-l">Groq API — no cost</div></div>
+    <div class="stat"><div class="stat-n">4</div><div class="stat-l">Note styles including Hinglish</div></div>
+  </div>
+
+  <div class="card">
+    <label>YouTube Video URL</label>
+    <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..."/>
+
+    <div class="examples">
+      <span style="font-size:11px;color:#333;align-self:center">Try:</span>
+      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=W3I3kAg2J7w')">Physics</span>
+      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=rfscVS0vtbw')">Python</span>
+      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=HMQkV5cTuoY')">Maths</span>
+    </div>
+
+    <label>Groq API Key — <a href="https://console.groq.com" target="_blank" style="color:#22c55e;text-decoration:none">Free at console.groq.com</a></label>
+    <input type="password" id="apiKey" placeholder="gsk_xxxxxxxxxxxxxxxx"/>
+    <div class="hint">console.groq.com → Sign up → API Keys → Create Key → Copy</div>
+
+    <label style="margin-bottom:10px">Notes ka style:</label>
+    <div class="styles">
+      <div class="sty on" onclick="setSty(this,'bullet')">Bullet Points</div>
+      <div class="sty" onclick="setSty(this,'detailed')">Detailed</div>
+      <div class="sty" onclick="setSty(this,'exam')">Exam Ready</div>
+      <div class="sty" onclick="setSty(this,'hinglish')">Hinglish</div>
+    </div>
+
+    <button class="btn" id="genBtn" onclick="generate()">Notes Banao</button>
+  </div>
+
+  <div class="err" id="err"></div>
+
+  <div class="load" id="load">
+    <div class="spin"></div>
+    <div class="load-txt">AI kaam kar raha hai...</div>
+    <div class="load-step" id="loadStep">Transcript fetch ho raha hai</div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="res-head">
+      <div class="res-title">Your Study Notes</div>
+      <div class="res-btns">
+        <button class="rbtn" id="copyBtn" onclick="copyIt()">Copy</button>
+        <button class="rbtn" onclick="downloadIt()">Download</button>
+        <button class="rbtn" onclick="reset()">New Video</button>
+      </div>
+    </div>
+    <div class="res-body" id="resBody"></div>
+  </div>
+</div>
+
+<footer>Made by an 18-year-old builder from India 🇮🇳 &nbsp;·&nbsp; YTNotes.ai</footer>
+
+<script>
+  // ⚠️ IMPORTANT: Railway pe deploy karne ke baad yahan apna URL daalo
+  // Example: const BACKEND = 'https://yt-notes.up.railway.app'
+  const BACKEND = 'http://localhost:5000'; // local testing ke liye
+
+  let style = 'bullet';
+  let lastNotes = '';
+
+  function setUrl(u){ document.getElementById('ytUrl').value = u; }
+
+  function setSty(el, s){
+    document.querySelectorAll('.sty').forEach(b => b.classList.remove('on'));
+    el.classList.add('on');
+    style = s;
+  }
+
+  async function generate(){
+    const url    = document.getElementById('ytUrl').value.trim();
+    const apiKey = document.getElementById('apiKey').value.trim();
+
+    if(!url)    return showErr('YouTube URL daalo!');
+    if(!apiKey) return showErr('Groq API key daalo — console.groq.com pe free milti hai!');
+
+    hideErr(); hideResult();
+    showLoad('Transcript fetch ho raha hai...');
+    setBtn(true);
+
+    try {
+      const res = await fetch(`${BACKEND}/api/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, apiKey, style })
+      });
+
+      const data = await res.json();
+
+      if(!res.ok || !data.success){
+        throw new Error(data.error || 'Kuch gadbad ho gayi, dobara try karo.');
+      }
+
+      lastNotes = data.notes;
+      hideLoad();
+      showResult(data.notes);
+
+    } catch(e){
+      hideLoad();
+      showErr(e.message);
+    }
+
+    setBtn(false);
+  }
+
+  function showErr(m){ const b=document.getElementById('err'); b.textContent='⚠️ '+m; b.classList.add('show'); }
+  function hideErr(){ document.getElementById('err').classList.remove('show'); }
+  function showLoad(s){ document.getElementById('load').classList.add('show'); document.getElementById('loadStep').textContent=s; }
+  function hideLoad(){ document.getElementById('load').classList.remove('show'); }
+  function showResult(n){ document.getElementById('resBody').textContent=n; document.getElementById('result').classList.add('show'); document.getElementById('result').scrollIntoView({behavior:'smooth'}); }
+  function hideResult(){ document.getElementById('result').classList.remove('show'); }
+  function setBtn(d){ const b=document.getElementById('genBtn'); b.disabled=d; b.textContent=d?'AI kaam kar raha hai...':'Notes Banao'; }
+
+  function copyIt(){
+    navigator.clipboard.writeText(lastNotes).then(()=>{
+      const b=document.getElementById('copyBtn');
+      b.textContent='Copied!'; b.classList.add('ok');
+      setTimeout(()=>{ b.textContent='Copy'; b.classList.remove('ok'); }, 2000);
+    });
+  }
+
+  function downloadIt(){
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([lastNotes],{type:'text/plain'}));
+    a.download='study-notes.txt'; a.click();
+  }
+
+  function reset(){
+    document.getElementById('ytUrl').value='';
+    hideResult(); hideErr(); hideLoad();
+  }
+</script>
+</body>
+</html>
