@@ -97,7 +97,7 @@ def generate_notes():
 
         client = Groq(api_key=groq_key)
         completion = client.chat.completions.create(
-            model="llama3-70b-8192",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": "You are an expert study notes creator. Make clear, well-structured, student-friendly notes."},
                 {"role": "user", "content": get_prompt(style, transcript)}
