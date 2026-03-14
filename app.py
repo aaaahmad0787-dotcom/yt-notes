@@ -4,9 +4,39 @@ from groq import Groq
 import requests
 import re
 import os
+from datetime import datetime, date
+from collections import defaultdict
 
 app = Flask(__name__)
 CORS(app)
+
+# API keys from environment variables
+GROQ_API_KEY     = os.environ.get('GROQ_API_KEY')
+SUPADATA_API_KEY = os.environ.get('SUPADATA_API_KEY')
+
+# Rate limiting — 3 free notes per IP per day
+usage_tracker = defaultdict(lambda: {'count': 0, 'date': str(date.today())})
+FREE_LIMIT = 3
+
+def check_rate_limit(ip):
+    user = usage_tracker[ip]
+    today = str(date.today())
+    if user['date'] != today:
+        user['count'] = 0
+        user['date'] = today
+    if user['count'] >= FREE_LIMIT:
+        return False
+    return True
+
+def increment_usage(ip):
+    usage_tracker[ip]['count'] += 1
+
+def get_remaining(ip):
+    user = usage_tracker[ip]
+    today = str(date.today())
+    if user['date'] != today:
+        return FREE_LIMIT
+    return max(0, FREE_LIMIT - user['count'])
 
 def get_video_id(url):
     url = url.split('?si=')[0].split('&si=')[0]
@@ -22,17 +52,17 @@ def get_video_id(url):
             return match.group(1)
     return None
 
-def fetch_transcript(video_id, supadata_key):
+def fetch_transcript(video_id):
     url = f"https://api.supadata.ai/v1/youtube/transcript?videoId={video_id}&text=true"
-    headers = {"x-api-key": supadata_key}
+    headers = {"x-api-key": SUPADATA_API_KEY}
     res = requests.get(url, headers=headers, timeout=30)
 
     if res.status_code == 404:
         raise Exception("Is video ka transcript nahi mila — dusri video try karo.")
     if res.status_code == 401:
-        raise Exception("Supadata API key galat hai!")
+        raise Exception("Supadata API error. Admin se contact karo.")
     if res.status_code != 200:
-        raise Exception(f"Transcript fetch nahi hua. Status: {res.status_code}")
+        raise Exception(f"Transcript fetch nahi hua. Dobara try karo.")
 
     data = res.json()
     transcript = data.get('content', '')
@@ -76,26 +106,38 @@ Format:
 @app.route('/api/notes', methods=['POST'])
 def generate_notes():
     try:
-        data         = request.get_json()
-        url          = data.get('url', '').strip()
-        groq_key     = data.get('apiKey', '').strip()
-        supadata_key = data.get('supadataKey', '').strip()
-        style        = data.get('style', 'bullet')
+        # Get user IP
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if ip and ',' in ip:
+            ip = ip.split(',')[0].strip()
+
+        # Check rate limit
+        if not check_rate_limit(ip):
+            return jsonify({
+                'error': 'limit_reached',
+                'message': f'Aaj ke 3 free notes use ho gaye! Kal wapas aao ya Pro plan lo.',
+                'remaining': 0
+            }), 429
+
+        data   = request.get_json()
+        url    = data.get('url', '').strip()
+        style  = data.get('style', 'bullet')
 
         if not url:
             return jsonify({'error': 'YouTube URL daalo!'}), 400
-        if not groq_key:
-            return jsonify({'error': 'Groq API key daalo!'}), 400
-        if not supadata_key:
-            return jsonify({'error': 'Supadata API key daalo!'}), 400
 
         video_id = get_video_id(url)
         if not video_id:
             return jsonify({'error': 'Valid YouTube URL nahi hai!'}), 400
 
-        transcript = fetch_transcript(video_id, supadata_key)
+        if not GROQ_API_KEY or not SUPADATA_API_KEY:
+            return jsonify({'error': 'Server configuration error. Admin se contact karo.'}), 500
 
-        client = Groq(api_key=groq_key)
+        # Fetch transcript
+        transcript = fetch_transcript(video_id)
+
+        # Generate notes
+        client = Groq(api_key=GROQ_API_KEY)
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
@@ -107,10 +149,26 @@ def generate_notes():
         )
 
         notes = completion.choices[0].message.content
-        return jsonify({'notes': notes, 'success': True})
+
+        # Increment usage
+        increment_usage(ip)
+        remaining = get_remaining(ip)
+
+        return jsonify({
+            'notes': notes,
+            'success': True,
+            'remaining': remaining
+        })
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/usage', methods=['GET'])
+def get_usage():
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ip and ',' in ip:
+        ip = ip.split(',')[0].strip()
+    return jsonify({'remaining': get_remaining(ip), 'limit': FREE_LIMIT})
 
 @app.route('/health', methods=['GET'])
 def health():

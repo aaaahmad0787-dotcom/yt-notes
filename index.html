@@ -25,20 +25,26 @@
     .stat-n{font-size:22px;font-weight:700;color:#22c55e}
     .stat-l{font-size:11px;color:#555;margin-top:3px}
 
+    /* Usage badge */
+    .usage-bar{background:#1a1a1a;border:1px solid #252525;border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+    .usage-left{font-size:13px;color:#888}
+    .usage-count{font-size:13px;font-weight:700;color:#22c55e}
+    .usage-dots{display:flex;gap:6px}
+    .dot{width:10px;height:10px;border-radius:50%;background:#222}
+    .dot.used{background:#22c55e}
+
     .card{background:#1a1a1a;border:1px solid #252525;border-radius:16px;padding:24px;margin-bottom:16px}
 
     label{font-size:12px;color:#666;display:block;margin-bottom:7px}
-    input[type=text],input[type=password]{width:100%;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:13px 15px;font-size:14px;color:#fff;outline:none;transition:border-color .2s;margin-bottom:6px}
+    input[type=text]{width:100%;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:13px 15px;font-size:14px;color:#fff;outline:none;transition:border-color .2s;margin-bottom:6px}
     input:focus{border-color:#22c55e}
     input::placeholder{color:#333}
-    .hint{font-size:11px;color:#444;margin-bottom:14px}
-    .hint a{color:#22c55e;text-decoration:none}
 
     .styles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
     .sty{background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:10px 6px;color:#555;font-size:12px;cursor:pointer;transition:all .2s;text-align:center}
     .sty.on{background:#22c55e15;border-color:#22c55e;color:#22c55e;font-weight:600}
 
-    .examples{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .examples{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
     .ex{font-size:11px;background:#111;border:1px solid #222;border-radius:6px;padding:4px 10px;color:#555;cursor:pointer;transition:all .2s}
     .ex:hover{border-color:#22c55e44;color:#22c55e}
 
@@ -48,6 +54,13 @@
 
     .err{display:none;background:#1a0808;border:1px solid #3a1515;border-radius:10px;padding:14px 18px;color:#f87171;font-size:13px;margin-bottom:16px;line-height:1.6}
     .err.show{display:block}
+
+    /* Limit reached box */
+    .limit-box{display:none;background:#1a0a00;border:1px solid #3a2000;border-radius:12px;padding:20px;margin-bottom:16px;text-align:center}
+    .limit-box.show{display:block}
+    .limit-title{font-size:16px;font-weight:700;color:#f59e0b;margin-bottom:8px}
+    .limit-sub{font-size:13px;color:#888;margin-bottom:16px;line-height:1.6}
+    .pro-btn{background:#f59e0b;color:#000;border:none;border-radius:8px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
 
     .load{display:none;text-align:center;padding:36px;background:#1a1a1a;border:1px solid #222;border-radius:16px;margin-bottom:16px}
     .load.show{display:block}
@@ -68,8 +81,6 @@
     .res-body::-webkit-scrollbar{width:3px}
     .res-body::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
 
-    .divider{border:none;border-top:1px solid #222;margin:16px 0}
-
     footer{text-align:center;padding:20px;color:#2a2a2a;font-size:11px;border-top:1px solid #151515}
   </style>
 </head>
@@ -81,40 +92,42 @@
 </nav>
 
 <div class="hero">
-  <div class="hero-tag">Powered by Groq AI + Supadata</div>
+  <div class="hero-tag">Powered by Groq AI — No signup needed</div>
   <h1>YouTube Videos ko<br/><span>Smart Notes</span> mein badlo</h1>
-  <p class="sub">Koi bhi YouTube video — AI se clean study notes. JEE, NEET, college sab ke liye.</p>
+  <p class="sub">Koi bhi YouTube video — AI se clean study notes. JEE, NEET, college sab ke liye. Bilkul free!</p>
 </div>
 
 <div class="wrap">
   <div class="stats">
     <div class="stat"><div class="stat-n">Any</div><div class="stat-l">YouTube video</div></div>
-    <div class="stat"><div class="stat-n">Free</div><div class="stat-l">Dono APIs free hain</div></div>
-    <div class="stat"><div class="stat-n">4</div><div class="stat-l">Note styles + Hinglish</div></div>
+    <div class="stat"><div class="stat-n">Free</div><div class="stat-l">No signup needed</div></div>
+    <div class="stat"><div class="stat-n">3/day</div><div class="stat-l">Free notes daily</div></div>
+  </div>
+
+  <!-- Usage indicator -->
+  <div class="usage-bar">
+    <div>
+      <div class="usage-left">Aaj ke free notes</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="usage-dots">
+        <div class="dot used" id="dot1"></div>
+        <div class="dot used" id="dot2"></div>
+        <div class="dot used" id="dot3"></div>
+      </div>
+      <div class="usage-count" id="usageCount">3 baaki</div>
+    </div>
   </div>
 
   <div class="card">
-
     <label>YouTube Video URL</label>
     <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..."/>
     <div class="examples">
       <span style="font-size:11px;color:#333;align-self:center">Try:</span>
-      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=rfscVS0vtbw')">Python</span>
-      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=kqtD5dpn9C8')">Basics</span>
+      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=rfscVS0vtbw')">Python Tutorial</span>
+      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=kqtD5dpn9C8')">Programming Basics</span>
       <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=HMQkV5cTuoY')">Maths</span>
     </div>
-
-    <hr class="divider"/>
-
-    <label>Supadata API Key — <a href="https://supadata.ai" target="_blank">Free at supadata.ai</a></label>
-    <input type="password" id="supadataKey" placeholder="sup_xxxxxxxxxxxxxxxx"/>
-    <div class="hint">supadata.ai → Sign up → API Keys → Copy</div>
-
-    <label>Groq API Key — <a href="https://console.groq.com" target="_blank">Free at console.groq.com</a></label>
-    <input type="password" id="apiKey" placeholder="gsk_xxxxxxxxxxxxxxxx"/>
-    <div class="hint">console.groq.com → Sign up → API Keys → Create Key → Copy</div>
-
-    <hr class="divider"/>
 
     <label style="margin-bottom:10px">Notes ka style:</label>
     <div class="styles">
@@ -124,10 +137,17 @@
       <div class="sty" onclick="setSty(this,'hinglish')">Hinglish</div>
     </div>
 
-    <button class="btn" id="genBtn" onclick="generate()">Notes Banao</button>
+    <button class="btn" id="genBtn" onclick="generate()">Notes Banao — Free</button>
   </div>
 
   <div class="err" id="err"></div>
+
+  <!-- Limit reached -->
+  <div class="limit-box" id="limitBox">
+    <div class="limit-title">Aaj ke 3 free notes use ho gaye!</div>
+    <div class="limit-sub">Kal midnight ke baad limit reset ho jaayegi.<br/>Ya Pro plan lo — unlimited notes, priority speed.</div>
+    <button class="pro-btn" onclick="alert('Pro plan coming soon! Kal wapas aao abhi ke liye.')">Pro Plan — Rs. 99/month (Coming Soon)</button>
+  </div>
 
   <div class="load" id="load">
     <div class="spin"></div>
@@ -141,7 +161,7 @@
       <div class="res-btns">
         <button class="rbtn" id="copyBtn" onclick="copyIt()">Copy</button>
         <button class="rbtn" onclick="downloadIt()">Download</button>
-        <button class="rbtn" onclick="reset()">New Video</button>
+        <button class="rbtn" onclick="resetForm()">New Video</button>
       </div>
     </div>
     <div class="res-body" id="resBody"></div>
@@ -151,11 +171,37 @@
 <footer>Made by an 18-year-old builder from India 🇮🇳 &nbsp;·&nbsp; YTNotes.ai</footer>
 
 <script>
-  // Railway URL — yeh mat badlna
   const BACKEND = 'https://web-production-bd02.up.railway.app';
-
   let style = 'bullet';
   let lastNotes = '';
+
+  // Load usage on page load
+  window.addEventListener('load', loadUsage);
+
+  async function loadUsage(){
+    try {
+      const res = await fetch(`${BACKEND}/api/usage`);
+      const data = await res.json();
+      updateUsageUI(data.remaining);
+    } catch(e) {}
+  }
+
+  function updateUsageUI(remaining){
+    document.getElementById('usageCount').textContent = remaining + ' baaki';
+    for(let i = 1; i <= 3; i++){
+      const dot = document.getElementById('dot' + i);
+      if(i <= remaining){
+        dot.classList.add('used');
+      } else {
+        dot.classList.remove('used');
+        dot.style.background = '#222';
+      }
+    }
+    if(remaining === 0){
+      document.getElementById('genBtn').disabled = true;
+      document.getElementById('limitBox').classList.add('show');
+    }
+  }
 
   function setUrl(u){ document.getElementById('ytUrl').value = u; }
 
@@ -166,15 +212,12 @@
   }
 
   async function generate(){
-    const url          = document.getElementById('ytUrl').value.trim();
-    const apiKey       = document.getElementById('apiKey').value.trim();
-    const supadataKey  = document.getElementById('supadataKey').value.trim();
+    const url = document.getElementById('ytUrl').value.trim();
+    if(!url) return showErr('YouTube URL daalo!');
 
-    if(!url)          return showErr('YouTube URL daalo!');
-    if(!supadataKey)  return showErr('Supadata API key daalo — supadata.ai pe free milti hai!');
-    if(!apiKey)       return showErr('Groq API key daalo — console.groq.com pe free milti hai!');
-
-    hideErr(); hideResult();
+    hideErr();
+    hideResult();
+    document.getElementById('limitBox').classList.remove('show');
     showLoad('Transcript fetch ho raha hai...');
     setBtn(true);
 
@@ -182,10 +225,18 @@
       const res = await fetch(`${BACKEND}/api/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, apiKey, supadataKey, style })
+        body: JSON.stringify({ url, style })
       });
 
       const data = await res.json();
+
+      if(res.status === 429){
+        hideLoad();
+        document.getElementById('limitBox').classList.add('show');
+        updateUsageUI(0);
+        setBtn(false);
+        return;
+      }
 
       if(!res.ok || !data.success){
         throw new Error(data.error || 'Kuch gadbad ho gayi, dobara try karo.');
@@ -194,6 +245,7 @@
       lastNotes = data.notes;
       hideLoad();
       showResult(data.notes);
+      updateUsageUI(data.remaining);
 
     } catch(e){
       hideLoad();
@@ -209,7 +261,7 @@
   function hideLoad(){ document.getElementById('load').classList.remove('show'); }
   function showResult(n){ document.getElementById('resBody').textContent=n; document.getElementById('result').classList.add('show'); document.getElementById('result').scrollIntoView({behavior:'smooth'}); }
   function hideResult(){ document.getElementById('result').classList.remove('show'); }
-  function setBtn(d){ const b=document.getElementById('genBtn'); b.disabled=d; b.textContent=d?'AI kaam kar raha hai...':'Notes Banao'; }
+  function setBtn(d){ const b=document.getElementById('genBtn'); b.disabled=d; b.textContent=d?'AI kaam kar raha hai...':'Notes Banao — Free'; }
 
   function copyIt(){
     navigator.clipboard.writeText(lastNotes).then(()=>{
@@ -225,7 +277,7 @@
     a.download='study-notes.txt'; a.click();
   }
 
-  function reset(){
+  function resetForm(){
     document.getElementById('ytUrl').value='';
     hideResult(); hideErr(); hideLoad();
   }
