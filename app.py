@@ -9,6 +9,9 @@ app = Flask(__name__)
 CORS(app)  # Frontend se requests allow karne ke liye
 
 def get_video_id(url):
+    # si parameter hata do pehle
+    url = url.split('?si=')[0].split('&si=')[0]
+    
     patterns = [
         r'(?:v=)([a-zA-Z0-9_-]{11})',
         r'(?:youtu\.be/)([a-zA-Z0-9_-]{11})',
