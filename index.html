@@ -28,12 +28,10 @@
     .card{background:#1a1a1a;border:1px solid #252525;border-radius:16px;padding:24px;margin-bottom:16px}
 
     label{font-size:12px;color:#666;display:block;margin-bottom:7px}
-
-    input[type=text],input[type=password]{width:100%;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:13px 15px;font-size:14px;color:#fff;outline:none;transition:border-color .2s;margin-bottom:14px}
+    input[type=text],input[type=password]{width:100%;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:13px 15px;font-size:14px;color:#fff;outline:none;transition:border-color .2s;margin-bottom:6px}
     input:focus{border-color:#22c55e}
     input::placeholder{color:#333}
-
-    .hint{font-size:11px;color:#444;margin-top:-10px;margin-bottom:16px}
+    .hint{font-size:11px;color:#444;margin-bottom:14px}
     .hint a{color:#22c55e;text-decoration:none}
 
     .styles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
@@ -70,6 +68,8 @@
     .res-body::-webkit-scrollbar{width:3px}
     .res-body::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
 
+    .divider{border:none;border-top:1px solid #222;margin:16px 0}
+
     footer{text-align:center;padding:20px;color:#2a2a2a;font-size:11px;border-top:1px solid #151515}
   </style>
 </head>
@@ -81,32 +81,40 @@
 </nav>
 
 <div class="hero">
-  <div class="hero-tag">Powered by Groq AI + YouTube Transcript API</div>
+  <div class="hero-tag">Powered by Groq AI + Supadata</div>
   <h1>YouTube Videos ko<br/><span>Smart Notes</span> mein badlo</h1>
-  <p class="sub">Subtitles ho ya na ho — kisi bhi video ka transcript fetch karke AI se clean notes banao. JEE, NEET, college sab ke liye.</p>
+  <p class="sub">Koi bhi YouTube video — AI se clean study notes. JEE, NEET, college sab ke liye.</p>
 </div>
 
 <div class="wrap">
   <div class="stats">
-    <div class="stat"><div class="stat-n">Any</div><div class="stat-l">Video — subtitles optional</div></div>
-    <div class="stat"><div class="stat-n">Free</div><div class="stat-l">Groq API — no cost</div></div>
-    <div class="stat"><div class="stat-n">4</div><div class="stat-l">Note styles including Hinglish</div></div>
+    <div class="stat"><div class="stat-n">Any</div><div class="stat-l">YouTube video</div></div>
+    <div class="stat"><div class="stat-n">Free</div><div class="stat-l">Dono APIs free hain</div></div>
+    <div class="stat"><div class="stat-n">4</div><div class="stat-l">Note styles + Hinglish</div></div>
   </div>
 
   <div class="card">
+
     <label>YouTube Video URL</label>
     <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..."/>
-
     <div class="examples">
       <span style="font-size:11px;color:#333;align-self:center">Try:</span>
-      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=W3I3kAg2J7w')">Physics</span>
       <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=rfscVS0vtbw')">Python</span>
+      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=kqtD5dpn9C8')">Basics</span>
       <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=HMQkV5cTuoY')">Maths</span>
     </div>
 
-    <label>Groq API Key — <a href="https://console.groq.com" target="_blank" style="color:#22c55e;text-decoration:none">Free at console.groq.com</a></label>
+    <hr class="divider"/>
+
+    <label>Supadata API Key — <a href="https://supadata.ai" target="_blank">Free at supadata.ai</a></label>
+    <input type="password" id="supadataKey" placeholder="sup_xxxxxxxxxxxxxxxx"/>
+    <div class="hint">supadata.ai → Sign up → API Keys → Copy</div>
+
+    <label>Groq API Key — <a href="https://console.groq.com" target="_blank">Free at console.groq.com</a></label>
     <input type="password" id="apiKey" placeholder="gsk_xxxxxxxxxxxxxxxx"/>
     <div class="hint">console.groq.com → Sign up → API Keys → Create Key → Copy</div>
+
+    <hr class="divider"/>
 
     <label style="margin-bottom:10px">Notes ka style:</label>
     <div class="styles">
@@ -143,8 +151,7 @@
 <footer>Made by an 18-year-old builder from India 🇮🇳 &nbsp;·&nbsp; YTNotes.ai</footer>
 
 <script>
-  // ⚠️ IMPORTANT: Railway pe deploy karne ke baad yahan apna URL daalo
-  // Example: const BACKEND = 'https://yt-notes.up.railway.app'
+  // Railway URL — yeh mat badlna
   const BACKEND = 'https://web-production-bd02.up.railway.app';
 
   let style = 'bullet';
@@ -159,11 +166,13 @@
   }
 
   async function generate(){
-    const url    = document.getElementById('ytUrl').value.trim();
-    const apiKey = document.getElementById('apiKey').value.trim();
+    const url          = document.getElementById('ytUrl').value.trim();
+    const apiKey       = document.getElementById('apiKey').value.trim();
+    const supadataKey  = document.getElementById('supadataKey').value.trim();
 
-    if(!url)    return showErr('YouTube URL daalo!');
-    if(!apiKey) return showErr('Groq API key daalo — console.groq.com pe free milti hai!');
+    if(!url)          return showErr('YouTube URL daalo!');
+    if(!supadataKey)  return showErr('Supadata API key daalo — supadata.ai pe free milti hai!');
+    if(!apiKey)       return showErr('Groq API key daalo — console.groq.com pe free milti hai!');
 
     hideErr(); hideResult();
     showLoad('Transcript fetch ho raha hai...');
@@ -173,7 +182,7 @@
       const res = await fetch(`${BACKEND}/api/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, apiKey, style })
+        body: JSON.stringify({ url, apiKey, supadataKey, style })
       });
 
       const data = await res.json();
