@@ -133,7 +133,7 @@ def generate_notes():
         if not check_rate_limit(ip):
             return jsonify({
                 'error': 'limit_reached',
-                'message': 'Aaj ke 3 free notes use ho gaye! Kal wapas aao.',
+                'message': 'Aaj ke 10 free notes use ho gaye! Kal wapas aao.',
                 'remaining': 0
             }), 429
 
