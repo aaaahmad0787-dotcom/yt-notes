@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>YTNotes.ai — AI Study Notes</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Segoe UI',sans-serif;background:#0f0f0f;color:#f0f0f0;min-height:100vh}
@@ -12,108 +13,125 @@
     .logo{font-size:20px;font-weight:800;color:#fff}.logo span{color:#22c55e}
     .nav-pill{font-size:11px;background:#22c55e18;color:#22c55e;border:1px solid #22c55e33;padding:4px 12px;border-radius:20px}
 
-    .hero{text-align:center;padding:56px 20px 36px}
-    .hero-tag{display:inline-block;font-size:12px;background:#22c55e12;color:#22c55e;border:1px solid #22c55e30;border-radius:20px;padding:5px 16px;margin-bottom:18px}
-    h1{font-size:clamp(26px,5vw,50px);font-weight:800;line-height:1.15;margin-bottom:14px}
+    .hero{text-align:center;padding:48px 20px 32px}
+    .hero-tag{display:inline-block;font-size:12px;background:#22c55e12;color:#22c55e;border:1px solid #22c55e30;border-radius:20px;padding:5px 16px;margin-bottom:16px}
+    h1{font-size:clamp(24px,4vw,46px);font-weight:800;line-height:1.15;margin-bottom:12px}
     h1 span{color:#22c55e}
-    .sub{font-size:15px;color:#666;max-width:460px;margin:0 auto 36px;line-height:1.6}
+    .sub{font-size:14px;color:#666;max-width:460px;margin:0 auto 32px;line-height:1.6}
 
-    .wrap{max-width:700px;margin:0 auto;padding:0 20px 60px}
+    .wrap{max-width:720px;margin:0 auto;padding:0 20px 60px}
 
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
-    .stat{background:#1a1a1a;border:1px solid #222;border-radius:12px;padding:16px;text-align:center}
-    .stat-n{font-size:22px;font-weight:700;color:#22c55e}
-    .stat-l{font-size:11px;color:#555;margin-top:3px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+    .stat{background:#1a1a1a;border:1px solid #222;border-radius:10px;padding:12px;text-align:center}
+    .stat-n{font-size:18px;font-weight:700;color:#22c55e}
+    .stat-l{font-size:10px;color:#555;margin-top:2px}
 
-    /* Usage badge */
-    .usage-bar{background:#1a1a1a;border:1px solid #252525;border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
-    .usage-left{font-size:13px;color:#888}
-    .usage-count{font-size:13px;font-weight:700;color:#22c55e}
-    .usage-dots{display:flex;gap:6px}
-    .dot{width:10px;height:10px;border-radius:50%;background:#222}
-    .dot.used{background:#22c55e}
+    .usage-bar{background:#1a1a1a;border:1px solid #252525;border-radius:10px;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+    .usage-left{font-size:12px;color:#666}
+    .usage-dots{display:flex;gap:5px}
+    .dot{width:9px;height:9px;border-radius:50%;background:#222;transition:background .3s}
+    .dot.on{background:#22c55e}
+    .usage-count{font-size:12px;font-weight:700;color:#22c55e;margin-left:10px}
 
-    .card{background:#1a1a1a;border:1px solid #252525;border-radius:16px;padding:24px;margin-bottom:16px}
+    .card{background:#1a1a1a;border:1px solid #252525;border-radius:14px;padding:22px;margin-bottom:14px}
 
-    label{font-size:12px;color:#666;display:block;margin-bottom:7px}
-    input[type=text]{width:100%;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:13px 15px;font-size:14px;color:#fff;outline:none;transition:border-color .2s;margin-bottom:6px}
+    label{font-size:12px;color:#666;display:block;margin-bottom:6px}
+    input[type=text]{width:100%;background:#111;border:1px solid #2a2a2a;border-radius:9px;padding:12px 14px;font-size:14px;color:#fff;outline:none;transition:border-color .2s;margin-bottom:6px}
     input:focus{border-color:#22c55e}
     input::placeholder{color:#333}
 
-    .styles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
-    .sty{background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:10px 6px;color:#555;font-size:12px;cursor:pointer;transition:all .2s;text-align:center}
+    .examples{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+    .ex{font-size:11px;background:#111;border:1px solid #222;border-radius:6px;padding:4px 9px;color:#555;cursor:pointer;transition:all .2s}
+    .ex:hover{border-color:#22c55e55;color:#22c55e}
+
+    .style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+    .style-grid-2{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:18px}
+    .sty{background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:10px 6px;color:#555;font-size:11px;cursor:pointer;transition:all .2s;text-align:center;line-height:1.4}
+    .sty .sty-icon{font-size:14px;display:block;margin-bottom:3px}
     .sty.on{background:#22c55e15;border-color:#22c55e;color:#22c55e;font-weight:600}
+    .sty-label{font-size:10px;color:#444;text-align:center;margin-bottom:10px}
 
-    .examples{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
-    .ex{font-size:11px;background:#111;border:1px solid #222;border-radius:6px;padding:4px 10px;color:#555;cursor:pointer;transition:all .2s}
-    .ex:hover{border-color:#22c55e44;color:#22c55e}
-
-    .btn{width:100%;background:#22c55e;color:#000;border:none;border-radius:10px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s}
+    .btn{width:100%;background:#22c55e;color:#000;border:none;border-radius:9px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s}
     .btn:hover{background:#16a34a}
     .btn:disabled{background:#1e1e1e;color:#444;cursor:not-allowed}
 
-    .err{display:none;background:#1a0808;border:1px solid #3a1515;border-radius:10px;padding:14px 18px;color:#f87171;font-size:13px;margin-bottom:16px;line-height:1.6}
+    .err{display:none;background:#1a0808;border:1px solid #3a1515;border-radius:9px;padding:12px 16px;color:#f87171;font-size:13px;margin-bottom:14px;line-height:1.6}
     .err.show{display:block}
 
-    /* Limit reached box */
-    .limit-box{display:none;background:#1a0a00;border:1px solid #3a2000;border-radius:12px;padding:20px;margin-bottom:16px;text-align:center}
+    .limit-box{display:none;background:#1a0a00;border:1px solid #3a2000;border-radius:12px;padding:18px;margin-bottom:14px;text-align:center}
     .limit-box.show{display:block}
-    .limit-title{font-size:16px;font-weight:700;color:#f59e0b;margin-bottom:8px}
-    .limit-sub{font-size:13px;color:#888;margin-bottom:16px;line-height:1.6}
-    .pro-btn{background:#f59e0b;color:#000;border:none;border-radius:8px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
+    .limit-title{font-size:15px;font-weight:700;color:#f59e0b;margin-bottom:6px}
+    .limit-sub{font-size:12px;color:#888;margin-bottom:14px;line-height:1.5}
+    .pro-btn{background:#f59e0b;color:#000;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;width:100%}
 
-    .load{display:none;text-align:center;padding:36px;background:#1a1a1a;border:1px solid #222;border-radius:16px;margin-bottom:16px}
+    .load{display:none;text-align:center;padding:32px;background:#1a1a1a;border:1px solid #222;border-radius:14px;margin-bottom:14px}
     .load.show{display:block}
-    .spin{width:34px;height:34px;border:3px solid #1e1e1e;border-top:3px solid #22c55e;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
+    .spin{width:32px;height:32px;border:3px solid #1e1e1e;border-top:3px solid #22c55e;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .load-txt{color:#555;font-size:13px}
-    .load-step{color:#22c55e;font-size:12px;margin-top:6px}
+    .load-step{color:#22c55e;font-size:12px;margin-top:5px}
 
-    .result{display:none;background:#1a1a1a;border:1px solid #252525;border-radius:16px;overflow:hidden;margin-bottom:16px}
+    /* RESULT */
+    .result{display:none;background:#1a1a1a;border:1px solid #252525;border-radius:14px;overflow:hidden;margin-bottom:14px}
     .result.show{display:block}
-    .res-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#111;border-bottom:1px solid #1e1e1e}
+    .res-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#111;border-bottom:1px solid #1e1e1e;flex-wrap:wrap;gap:8px}
     .res-title{font-size:13px;font-weight:600;color:#22c55e}
-    .res-btns{display:flex;gap:6px}
-    .rbtn{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:5px 12px;color:#aaa;font-size:12px;cursor:pointer;transition:all .2s}
+    .res-btns{display:flex;gap:6px;flex-wrap:wrap}
+    .rbtn{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:5px 11px;color:#aaa;font-size:11px;cursor:pointer;transition:all .2s}
     .rbtn:hover{background:#222;color:#fff}
     .rbtn.ok{background:#22c55e18;border-color:#22c55e;color:#22c55e}
-    .res-body{padding:22px;font-size:14px;line-height:1.85;color:#ccc;white-space:pre-wrap;max-height:580px;overflow-y:auto}
+    .rbtn.pdf{background:#3b1a1a;border-color:#f87171;color:#f87171}
+    .rbtn.pdf:hover{background:#4a1a1a}
+
+    /* NOTES VIEW */
+    .res-body{padding:20px;font-size:14px;line-height:1.85;color:#ccc;white-space:pre-wrap;max-height:500px;overflow-y:auto}
     .res-body::-webkit-scrollbar{width:3px}
     .res-body::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
 
-    footer{text-align:center;padding:20px;color:#2a2a2a;font-size:11px;border-top:1px solid #151515}
+    /* FLASHCARD VIEW */
+    .flashcard-view{display:none;padding:20px}
+    .fc-progress{font-size:12px;color:#666;text-align:center;margin-bottom:16px}
+    .fc-card{background:#111;border:1px solid #2a2a2a;border-radius:12px;min-height:180px;display:flex;align-items:center;justify-content:center;padding:24px;cursor:pointer;transition:all .3s;margin-bottom:14px;text-align:center}
+    .fc-card:hover{border-color:#22c55e44}
+    .fc-question{font-size:16px;font-weight:600;color:#fff;line-height:1.5}
+    .fc-answer{font-size:15px;color:#22c55e;line-height:1.6;display:none}
+    .fc-hint{font-size:11px;color:#444;margin-top:10px}
+    .fc-nav{display:flex;gap:8px;justify-content:center}
+    .fc-btn{background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:8px 20px;color:#aaa;font-size:13px;cursor:pointer;transition:all .2s}
+    .fc-btn:hover{background:#1a1a1a;color:#fff}
+    .fc-btn.flip{background:#22c55e15;border-color:#22c55e;color:#22c55e}
+
+    footer{text-align:center;padding:20px;color:#2a2a2a;font-size:11px;border-top:1px solid #111}
   </style>
 </head>
 <body>
 
 <nav>
   <div class="logo">YT<span>Notes</span>.ai</div>
-  <div class="nav-pill">Free Beta — Made in India</div>
+  <div class="nav-pill">Free — Made in India</div>
 </nav>
 
 <div class="hero">
-  <div class="hero-tag">Powered by Groq AI — No signup needed</div>
+  <div class="hero-tag">Groq AI + Supadata — No signup needed</div>
   <h1>YouTube Videos ko<br/><span>Smart Notes</span> mein badlo</h1>
-  <p class="sub">Koi bhi YouTube video — AI se clean study notes. JEE, NEET, college sab ke liye. Bilkul free!</p>
+  <p class="sub">Notes, chapters, flashcards — sab kuch. JEE, NEET, college, coding sab ke liye.</p>
 </div>
 
 <div class="wrap">
+
   <div class="stats">
     <div class="stat"><div class="stat-n">Any</div><div class="stat-l">YouTube video</div></div>
-    <div class="stat"><div class="stat-n">Free</div><div class="stat-l">No signup needed</div></div>
-    <div class="stat"><div class="stat-n">3/day</div><div class="stat-l">Free notes daily</div></div>
+    <div class="stat"><div class="stat-n">6</div><div class="stat-l">Note styles</div></div>
+    <div class="stat"><div class="stat-n">PDF</div><div class="stat-l">Download karo</div></div>
+    <div class="stat"><div class="stat-n">Free</div><div class="stat-l">3 notes/day</div></div>
   </div>
 
-  <!-- Usage indicator -->
   <div class="usage-bar">
-    <div>
-      <div class="usage-left">Aaj ke free notes</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div class="usage-left">Aaj ke free notes</div>
+    <div style="display:flex;align-items:center">
       <div class="usage-dots">
-        <div class="dot used" id="dot1"></div>
-        <div class="dot used" id="dot2"></div>
-        <div class="dot used" id="dot3"></div>
+        <div class="dot on" id="dot1"></div>
+        <div class="dot on" id="dot2"></div>
+        <div class="dot on" id="dot3"></div>
       </div>
       <div class="usage-count" id="usageCount">3 baaki</div>
     </div>
@@ -125,16 +143,24 @@
     <div class="examples">
       <span style="font-size:11px;color:#333;align-self:center">Try:</span>
       <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=rfscVS0vtbw')">Python Tutorial</span>
-      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=kqtD5dpn9C8')">Programming Basics</span>
+      <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=kqtD5dpn9C8')">Programming</span>
       <span class="ex" onclick="setUrl('https://www.youtube.com/watch?v=HMQkV5cTuoY')">Maths</span>
     </div>
 
-    <label style="margin-bottom:10px">Notes ka style:</label>
-    <div class="styles">
-      <div class="sty on" onclick="setSty(this,'bullet')">Bullet Points</div>
-      <div class="sty" onclick="setSty(this,'detailed')">Detailed</div>
-      <div class="sty" onclick="setSty(this,'exam')">Exam Ready</div>
-      <div class="sty" onclick="setSty(this,'hinglish')">Hinglish</div>
+    <label style="margin-bottom:8px">Notes ka style chuno:</label>
+
+    <div class="sty-label">Basic notes</div>
+    <div class="style-grid">
+      <div class="sty on" onclick="setSty(this,'bullet')"><span class="sty-icon">•</span>Bullet Points</div>
+      <div class="sty" onclick="setSty(this,'detailed')"><span class="sty-icon">📄</span>Detailed</div>
+      <div class="sty" onclick="setSty(this,'hinglish')"><span class="sty-icon">🇮🇳</span>Hinglish</div>
+    </div>
+
+    <div class="sty-label" style="margin-top:8px">Power features</div>
+    <div class="style-grid-2">
+      <div class="sty" onclick="setSty(this,'exam')"><span class="sty-icon">📝</span>Exam Ready</div>
+      <div class="sty" onclick="setSty(this,'chapter')"><span class="sty-icon">📚</span>Chapter Wise</div>
+      <div class="sty" onclick="setSty(this,'flashcard')"><span class="sty-icon">🃏</span>Flashcards</div>
     </div>
 
     <button class="btn" id="genBtn" onclick="generate()">Notes Banao — Free</button>
@@ -142,55 +168,73 @@
 
   <div class="err" id="err"></div>
 
-  <!-- Limit reached -->
   <div class="limit-box" id="limitBox">
     <div class="limit-title">Aaj ke 3 free notes use ho gaye!</div>
-    <div class="limit-sub">Kal midnight ke baad limit reset ho jaayegi.<br/>Ya Pro plan lo — unlimited notes, priority speed.</div>
-    <button class="pro-btn" onclick="alert('Pro plan coming soon! Kal wapas aao abhi ke liye.')">Pro Plan — Rs. 29/month (Coming Soon)</button>
+    <div class="limit-sub">Kal midnight ke baad limit reset hogi.<br/>Ya Pro plan lo — unlimited notes, priority speed.</div>
+    <button class="pro-btn" onclick="alert('Pro plan coming soon! Rs. 49/month. Kal wapas aao abhi ke liye.')">Pro Plan — Rs. 49/month (Coming Soon)</button>
   </div>
 
   <div class="load" id="load">
     <div class="spin"></div>
-    <div class="load-txt">AI kaam kar raha hai...</div>
+    <div style="color:#555;font-size:13px">AI kaam kar raha hai...</div>
     <div class="load-step" id="loadStep">Transcript fetch ho raha hai</div>
   </div>
 
+  <!-- RESULT -->
   <div class="result" id="result">
     <div class="res-head">
-      <div class="res-title">Your Study Notes</div>
+      <div class="res-title" id="resTitle">Your Study Notes</div>
       <div class="res-btns">
         <button class="rbtn" id="copyBtn" onclick="copyIt()">Copy</button>
-        <button class="rbtn" onclick="downloadIt()">Download</button>
+        <button class="rbtn pdf" onclick="downloadPDF()">PDF Download</button>
+        <button class="rbtn" onclick="downloadTxt()">TXT</button>
         <button class="rbtn" onclick="resetForm()">New Video</button>
       </div>
     </div>
+    <!-- Notes view -->
     <div class="res-body" id="resBody"></div>
+    <!-- Flashcard view -->
+    <div class="flashcard-view" id="flashcardView">
+      <div class="fc-progress" id="fcProgress">Card 1 of 10</div>
+      <div class="fc-card" id="fcCard" onclick="flipCard()">
+        <div>
+          <div class="fc-question" id="fcQuestion"></div>
+          <div class="fc-answer" id="fcAnswer"></div>
+          <div class="fc-hint" id="fcHint">Tap to reveal answer</div>
+        </div>
+      </div>
+      <div class="fc-nav">
+        <button class="fc-btn" onclick="prevCard()">← Prev</button>
+        <button class="fc-btn flip" onclick="flipCard()">Flip</button>
+        <button class="fc-btn" onclick="nextCard()">Next →</button>
+      </div>
+    </div>
   </div>
+
 </div>
 
 <footer>Made by an 18-year-old builder from India 🇮🇳 &nbsp;·&nbsp; YTNotes.ai</footer>
 
 <script>
   const BACKEND = 'https://web-production-bd02.up.railway.app';
+  const FREE_LIMIT = 3;
   let style = 'bullet';
   let lastNotes = '';
+  let flashcards = [];
+  let currentCard = 0;
+  let isFlipped = false;
 
-  const FREE_LIMIT = 3;
-
+  // localStorage usage
   function getUsage(){
     const today = new Date().toISOString().split('T')[0];
     const saved = JSON.parse(localStorage.getItem('ytnotes_usage') || '{}');
     if(saved.date !== today) return { count: 0, date: today };
     return saved;
   }
-
   function saveUsage(u){ localStorage.setItem('ytnotes_usage', JSON.stringify(u)); }
   function getRemainingLocal(){ return Math.max(0, FREE_LIMIT - getUsage().count); }
-
   function incrementLocal(){
-    const u = getUsage();
-    u.count += 1;
-    saveUsage(u);
+    const u = getUsage(); u.count += 1; saveUsage(u);
     return Math.max(0, FREE_LIMIT - u.count);
   }
 
@@ -199,12 +243,11 @@
   function updateUsageUI(remaining){
     document.getElementById('usageCount').textContent = remaining + ' baaki';
     for(let i = 1; i <= 3; i++){
-      const dot = document.getElementById('dot' + i);
-      dot.style.background = i <= remaining ? '#22c55e' : '#222';
+      document.getElementById('dot'+i).style.background = i <= remaining ? '#22c55e' : '#222';
     }
-    const limitReached = remaining === 0;
-    document.getElementById('genBtn').disabled = limitReached;
-    document.getElementById('limitBox').classList.toggle('show', limitReached);
+    const out = remaining === 0;
+    document.getElementById('genBtn').disabled = out;
+    document.getElementById('limitBox').classList.toggle('show', out);
   }
 
   function setUrl(u){ document.getElementById('ytUrl').value = u; }
@@ -219,13 +262,14 @@
     const url = document.getElementById('ytUrl').value.trim();
     if(!url) return showErr('YouTube URL daalo!');
 
-    hideErr();
-    hideResult();
+    hideErr(); hideResult();
     document.getElementById('limitBox').classList.remove('show');
     showLoad('Transcript fetch ho raha hai...');
     setBtn(true);
 
     try {
+      setTimeout(() => { document.getElementById('loadStep').textContent = 'AI notes bana raha hai...'; }, 3000);
+
       const res = await fetch(`${BACKEND}/api/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -234,57 +278,155 @@
 
       const data = await res.json();
 
-      if(res.status === 429){
-        hideLoad();
-        document.getElementById('limitBox').classList.add('show');
-        updateUsageUI(0);
-        setBtn(false);
-        return;
-      }
-
-      if(!res.ok || !data.success){
-        throw new Error(data.error || 'Kuch gadbad ho gayi, dobara try karo.');
-      }
+      if(res.status === 429){ hideLoad(); document.getElementById('limitBox').classList.add('show'); updateUsageUI(0); setBtn(false); return; }
+      if(!res.ok || !data.success) throw new Error(data.error || 'Kuch gadbad ho gayi.');
 
       lastNotes = data.notes;
       hideLoad();
-      showResult(data.notes);
+
+      if(style === 'flashcard'){
+        parseAndShowFlashcards(data.notes);
+      } else {
+        showNotes(data.notes);
+      }
+
       const rem = incrementLocal();
       updateUsageUI(rem);
 
-    } catch(e){
-      hideLoad();
-      showErr(e.message);
+    } catch(e){ hideLoad(); showErr(e.message); }
+    setBtn(false);
+  }
+
+  // ---- NOTES VIEW ----
+  function showNotes(notes){
+    const titles = { bullet:'Bullet Notes', detailed:'Detailed Notes', exam:'Exam Notes', hinglish:'Hinglish Notes', chapter:'Chapter Wise Notes' };
+    document.getElementById('resTitle').textContent = titles[style] || 'Study Notes';
+    document.getElementById('resBody').textContent = notes;
+    document.getElementById('resBody').style.display = 'block';
+    document.getElementById('flashcardView').style.display = 'none';
+    document.getElementById('result').classList.add('show');
+    document.getElementById('result').scrollIntoView({behavior:'smooth'});
+  }
+
+  // ---- FLASHCARD VIEW ----
+  function parseAndShowFlashcards(text){
+    flashcards = [];
+    const cardRegex = /Q:\s*(.+?)\nA:\s*(.+?)(?=\nCARD|\nQ:|$)/gs;
+    let match;
+    while((match = cardRegex.exec(text)) !== null){
+      flashcards.push({ q: match[1].trim(), a: match[2].trim() });
+    }
+    if(flashcards.length === 0){
+      // fallback parse
+      const lines = text.split('\n');
+      let q = '', a = '';
+      for(const line of lines){
+        if(line.startsWith('Q:')) q = line.replace('Q:','').trim();
+        if(line.startsWith('A:') && q){ a = line.replace('A:','').trim(); flashcards.push({q,a}); q=''; a=''; }
+      }
+    }
+    if(flashcards.length === 0){ showNotes(text); return; }
+
+    currentCard = 0;
+    isFlipped = false;
+    document.getElementById('resTitle').textContent = `Flashcards (${flashcards.length} cards)`;
+    document.getElementById('resBody').style.display = 'none';
+    document.getElementById('flashcardView').style.display = 'block';
+    document.getElementById('result').classList.add('show');
+    renderCard();
+    document.getElementById('result').scrollIntoView({behavior:'smooth'});
+  }
+
+  function renderCard(){
+    if(flashcards.length === 0) return;
+    const card = flashcards[currentCard];
+    isFlipped = false;
+    document.getElementById('fcProgress').textContent = `Card ${currentCard+1} of ${flashcards.length}`;
+    document.getElementById('fcQuestion').textContent = card.q;
+    document.getElementById('fcAnswer').textContent = card.a;
+    document.getElementById('fcAnswer').style.display = 'none';
+    document.getElementById('fcQuestion').style.display = 'block';
+    document.getElementById('fcHint').textContent = 'Tap to reveal answer';
+  }
+
+  function flipCard(){
+    isFlipped = !isFlipped;
+    document.getElementById('fcQuestion').style.display = isFlipped ? 'none' : 'block';
+    document.getElementById('fcAnswer').style.display = isFlipped ? 'block' : 'none';
+    document.getElementById('fcHint').textContent = isFlipped ? 'Tap to see question' : 'Tap to reveal answer';
+  }
+
+  function nextCard(){ if(currentCard < flashcards.length-1){ currentCard++; renderCard(); } }
+  function prevCard(){ if(currentCard > 0){ currentCard--; renderCard(); } }
+
+  // ---- PDF DOWNLOAD ----
+  function downloadPDF(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.setFont('helvetica','bold');
+    doc.text('YTNotes.ai — Study Notes', 20, 20);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(100);
+    doc.text(`Generated on ${new Date().toLocaleDateString()}`, 20, 30);
+
+    doc.setTextColor(0);
+    doc.setFontSize(11);
+
+    const lines = doc.splitTextToSize(lastNotes, 170);
+    let y = 45;
+    for(const line of lines){
+      if(y > 270){ doc.addPage(); y = 20; }
+      if(line.startsWith('##')){
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(13);
+        doc.text(line.replace(/#+/g,'').trim(), 20, y);
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(11);
+      } else if(line.startsWith('#')){
+        doc.setFont('helvetica','bold');
+        doc.text(line.replace(/#+/g,'').trim(), 20, y);
+        doc.setFont('helvetica','normal');
+      } else {
+        doc.text(line, 20, y);
+      }
+      y += 7;
     }
 
-    setBtn(false);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text('Made with YTNotes.ai — ytnotes-app.vercel.app', 20, 285);
+    doc.save('study-notes.pdf');
+  }
+
+  function downloadTxt(){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([lastNotes],{type:'text/plain'}));
+    a.download = 'study-notes.txt'; a.click();
+  }
+
+  function copyIt(){
+    navigator.clipboard.writeText(lastNotes).then(()=>{
+      const b = document.getElementById('copyBtn');
+      b.textContent = 'Copied!'; b.classList.add('ok');
+      setTimeout(()=>{ b.textContent='Copy'; b.classList.remove('ok'); }, 2000);
+    });
   }
 
   function showErr(m){ const b=document.getElementById('err'); b.textContent='⚠️ '+m; b.classList.add('show'); }
   function hideErr(){ document.getElementById('err').classList.remove('show'); }
   function showLoad(s){ document.getElementById('load').classList.add('show'); document.getElementById('loadStep').textContent=s; }
   function hideLoad(){ document.getElementById('load').classList.remove('show'); }
-  function showResult(n){ document.getElementById('resBody').textContent=n; document.getElementById('result').classList.add('show'); document.getElementById('result').scrollIntoView({behavior:'smooth'}); }
   function hideResult(){ document.getElementById('result').classList.remove('show'); }
   function setBtn(d){ const b=document.getElementById('genBtn'); b.disabled=d; b.textContent=d?'AI kaam kar raha hai...':'Notes Banao — Free'; }
-
-  function copyIt(){
-    navigator.clipboard.writeText(lastNotes).then(()=>{
-      const b=document.getElementById('copyBtn');
-      b.textContent='Copied!'; b.classList.add('ok');
-      setTimeout(()=>{ b.textContent='Copy'; b.classList.remove('ok'); }, 2000);
-    });
-  }
-
-  function downloadIt(){
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([lastNotes],{type:'text/plain'}));
-    a.download='study-notes.txt'; a.click();
-  }
 
   function resetForm(){
     document.getElementById('ytUrl').value='';
     hideResult(); hideErr(); hideLoad();
+    flashcards = []; currentCard = 0;
   }
 </script>
 </body>
