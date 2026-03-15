@@ -4,17 +4,15 @@ from groq import Groq
 import requests
 import re
 import os
-from datetime import datetime, date
+from datetime import date
 from collections import defaultdict
 
 app = Flask(__name__)
 CORS(app)
 
-# API keys from environment variables
 GROQ_API_KEY     = os.environ.get('GROQ_API_KEY')
 SUPADATA_API_KEY = os.environ.get('SUPADATA_API_KEY')
 
-# Rate limiting — 3 free notes per IP per day
 usage_tracker = defaultdict(lambda: {'count': 0, 'date': str(date.today())})
 FREE_LIMIT = 3
 
@@ -24,17 +22,14 @@ def check_rate_limit(ip):
     if user['date'] != today:
         user['count'] = 0
         user['date'] = today
-    if user['count'] >= FREE_LIMIT:
-        return False
-    return True
+    return user['count'] < FREE_LIMIT
 
 def increment_usage(ip):
     usage_tracker[ip]['count'] += 1
 
 def get_remaining(ip):
     user = usage_tracker[ip]
-    today = str(date.today())
-    if user['date'] != today:
+    if user['date'] != str(date.today()):
         return FREE_LIMIT
     return max(0, FREE_LIMIT - user['count'])
 
@@ -56,14 +51,12 @@ def fetch_transcript(video_id):
     url = f"https://api.supadata.ai/v1/youtube/transcript?videoId={video_id}&text=true"
     headers = {"x-api-key": SUPADATA_API_KEY}
     res = requests.get(url, headers=headers, timeout=30)
-
     if res.status_code == 404:
         raise Exception("Is video ka transcript nahi mila — dusri video try karo.")
     if res.status_code == 401:
-        raise Exception("Supadata API error. Admin se contact karo.")
+        raise Exception("Supadata API error.")
     if res.status_code != 200:
-        raise Exception(f"Transcript fetch nahi hua. Dobara try karo.")
-
+        raise Exception("Transcript fetch nahi hua. Dobara try karo.")
     data = res.json()
     transcript = data.get('content', '')
     if not transcript:
@@ -80,10 +73,11 @@ Format:
 • Point 2
 ### Summary
 2-3 line summary""",
-        'detailed': """Create detailed study notes with explanations, definitions, examples, and key takeaways.
+
+        'detailed': """Create detailed study notes with explanations, definitions, examples.
 Use clear headings and paragraphs.""",
+
         'exam': """Create exam-ready notes.
-Format:
 ## Topic
 ### Must Remember
 • Critical points
@@ -92,36 +86,60 @@ Format:
 ### Likely Exam Questions
 Q: ... A: ...
 ### Quick Revision""",
+
         'hinglish': """Hinglish mein notes banao — jaise dost samjha raha ho.
-Format:
 ## Topic kya hai
 ### Main Points
 • Simple explanation
 ### Yaad rakhne wali cheezein
-### Ek line mein summary"""
+### Ek line mein summary""",
+
+        'chapter': """Break this transcript into clear chapters/sections.
+For each chapter:
+## Chapter 1: [Title]
+**Time range:** Start to end (estimate)
+**Main topic:** What this section covers
+### Key Points
+• Point 1
+• Point 2
+**Chapter Summary:** 1-2 lines
+
+Create as many chapters as needed based on topic changes.""",
+
+        'flashcard': """Create flashcards from this transcript for studying.
+Format EXACTLY like this — each flashcard on new lines:
+
+CARD 1
+Q: [Question]
+A: [Answer]
+
+CARD 2
+Q: [Question]
+A: [Answer]
+
+Create 10-15 flashcards covering the most important concepts, definitions, and facts."""
     }
+
     style_prompt = prompts.get(style, prompts['bullet'])
-    return f"{style_prompt}\n\nTRANSCRIPT:\n{transcript[:6000]}\n\nNotes:"
+    return f"{style_prompt}\n\nTRANSCRIPT:\n{transcript[:6000]}\n\nGenerate now:"
 
 @app.route('/api/notes', methods=['POST'])
 def generate_notes():
     try:
-        # Get user IP
         ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if ip and ',' in ip:
             ip = ip.split(',')[0].strip()
 
-        # Check rate limit
         if not check_rate_limit(ip):
             return jsonify({
                 'error': 'limit_reached',
-                'message': f'Aaj ke 3 free notes use ho gaye! Kal wapas aao ya Pro plan lo.',
+                'message': 'Aaj ke 3 free notes use ho gaye! Kal wapas aao.',
                 'remaining': 0
             }), 429
 
-        data   = request.get_json()
-        url    = data.get('url', '').strip()
-        style  = data.get('style', 'bullet')
+        data  = request.get_json()
+        url   = data.get('url', '').strip()
+        style = data.get('style', 'bullet')
 
         if not url:
             return jsonify({'error': 'YouTube URL daalo!'}), 400
@@ -131,48 +149,37 @@ def generate_notes():
             return jsonify({'error': 'Valid YouTube URL nahi hai!'}), 400
 
         if not GROQ_API_KEY or not SUPADATA_API_KEY:
-            return jsonify({'error': 'Server configuration error. Admin se contact karo.'}), 500
+            return jsonify({'error': 'Server config error.'}), 500
 
-        # Fetch transcript
         transcript = fetch_transcript(video_id)
 
-        # Generate notes
         client = Groq(api_key=GROQ_API_KEY)
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": "You are an expert study notes creator. Make clear, well-structured, student-friendly notes."},
+                {"role": "system", "content": "You are an expert study notes creator. Make clear, well-structured, student-friendly content."},
                 {"role": "user", "content": get_prompt(style, transcript)}
             ],
-            max_tokens=1500,
+            max_tokens=2000,
             temperature=0.4
         )
 
         notes = completion.choices[0].message.content
-
-        # Increment usage
         increment_usage(ip)
-        remaining = get_remaining(ip)
 
         return jsonify({
             'notes': notes,
             'success': True,
-            'remaining': remaining
+            'remaining': get_remaining(ip),
+            'style': style
         })
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/usage', methods=['GET'])
-def get_usage():
-    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    if ip and ',' in ip:
-        ip = ip.split(',')[0].strip()
-    return jsonify({'remaining': get_remaining(ip), 'limit': FREE_LIMIT})
-
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'running', 'message': 'YTNotes backend chal raha hai!'})
+    return jsonify({'status': 'running'})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
