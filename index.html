@@ -122,18 +122,16 @@
     <div class="stat"><div class="stat-n">Any</div><div class="stat-l">YouTube video</div></div>
     <div class="stat"><div class="stat-n">6</div><div class="stat-l">Note styles</div></div>
     <div class="stat"><div class="stat-n">PDF</div><div class="stat-l">Download karo</div></div>
-    <div class="stat"><div class="stat-n">Free</div><div class="stat-l">3 notes/day</div></div>
+    <div class="stat"><div class="stat-n">Free</div><div class="stat-l">10 notes/day</div></div>
   </div>
 
   <div class="usage-bar">
     <div class="usage-left">Aaj ke free notes</div>
-    <div style="display:flex;align-items:center">
-      <div class="usage-dots">
-        <div class="dot on" id="dot1"></div>
-        <div class="dot on" id="dot2"></div>
-        <div class="dot on" id="dot3"></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:140px;height:8px;background:#222;border-radius:4px;overflow:hidden">
+        <div id="usageBar" style="height:100%;background:#22c55e;border-radius:4px;transition:width .4s;width:100%"></div>
       </div>
-      <div class="usage-count" id="usageCount">3 baaki</div>
+      <div class="usage-count" id="usageCount">10/10 baaki</div>
     </div>
   </div>
 
@@ -241,10 +239,11 @@
   window.addEventListener('load', () => { updateUsageUI(getRemainingLocal()); });
 
   function updateUsageUI(remaining){
-    document.getElementById('usageCount').textContent = remaining + ' baaki';
-    for(let i = 1; i <= 3; i++){
-      document.getElementById('dot'+i).style.background = i <= remaining ? '#22c55e' : '#222';
-    }
+    const used = FREE_LIMIT - remaining;
+    document.getElementById('usageCount').textContent = remaining + '/10 baaki';
+    const pct = Math.max(0, (remaining / FREE_LIMIT) * 100);
+    document.getElementById('usageBar').style.width = pct + '%';
+    document.getElementById('usageBar').style.background = remaining <= 2 ? '#f59e0b' : remaining === 0 ? '#ef4444' : '#22c55e';
     const out = remaining === 0;
     document.getElementById('genBtn').disabled = out;
     document.getElementById('limitBox').classList.toggle('show', out);
